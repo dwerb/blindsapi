@@ -90,5 +90,5 @@ ENV/
 
 #database
 *.sql
-*.sqlite
+*.sqlite3
 
