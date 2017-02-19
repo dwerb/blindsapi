@@ -4,4 +4,4 @@ from BlindsController.models import Window
 class WindowSerializer(serializers.ModelSerializer):
     class Meta:
         model = Window
-        fields = ('id', 'name', 'address', 'currentposition', 'tiltupsteps', 'tiltdownsteps', 'batterylevel')
+        fields = ('id', 'name', 'address', 'currentangle', 'stepsfromzero', 'tiltupsteps', 'tiltdownsteps', 'batterylevel')

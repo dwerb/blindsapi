@@ -7,10 +7,11 @@ from django.db import models
 class Window(models.Model):
     name = models.CharField(max_length=100, blank=False, default='')
     address = models.CharField(max_length=30, blank=False, default='')
-    currentposition = models.IntegerField(default=0)
+    currentangle = models.IntegerField(default=0)
+    stepsfromzero = models.IntegerField(default=0)
     tiltupsteps = models.IntegerField(default=0)
     tiltdownsteps = models.IntegerField(default=0)
     batterylevel = models.IntegerField(default=100)
     
     class Meta:
-        ordering = ('name', 'address', 'currentposition')
+        ordering = ('name', 'address', 'currentangle')

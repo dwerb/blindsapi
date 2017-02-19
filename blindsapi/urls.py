@@ -20,6 +20,7 @@ from BlindsController import views
 urlpatterns = [
                url(r'^window/$', views.WindowList.as_view()),
                url(r'^window/(?P<pk>[0-9]+)$', views.WindowDetail.as_view()),
+               url(r'^window/(?P<pk>[0-9]+)/turn/$', views.tiltwindow),
                ]
 
 urlpatterns = format_suffix_patterns(urlpatterns)
