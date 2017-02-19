@@ -4,6 +4,9 @@ from rest_framework import generics
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
 import json
+import sys
+import time
+from gattlib import GATTRequester, GATTResponse
 
 
 class WindowList(generics.ListCreateAPIView):
@@ -27,6 +30,23 @@ class WindowDetail(generics.RetrieveUpdateDestroyAPIView):
             serializer.save()
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+def sendSteps(address, steps):
+	print (type(address))
+	requester = GATTRequester(address)
+ 	t = 0.0
+	delay = 0.25
+	timeout = 5
+	while not requester.is_connected() and t < timeout:
+            t += delay
+            time.sleep(delay)
+	requester.write_by_handle(0x0012, steps)
+	while not requester.is_connected() and t < timeout:
+            t += delay
+            time.sleep(delay)
+	    requester.disconnect()
+
 
 @api_view(['GET'])
 def tiltwindow(request, pk):
@@ -58,7 +78,9 @@ def tiltwindow(request, pk):
     else:
         return Response({"message": "Got some data!", "targetangle": newangle, "currentangle":window.currentangle})
 
-#turn motor
+    if steps != 0:
+ 	steps = int(steps)
+	sendSteps(str(window.address), str(steps))
     window.currentangle = newangle
     window.stepsfromzero = steps + window.stepsfromzero
     window.save
