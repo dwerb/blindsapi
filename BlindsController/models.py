@@ -8,6 +8,7 @@ class Window(models.Model):
     name = models.CharField(max_length=100, blank=False, default='')
     address = models.CharField(max_length=30, blank=False, default='')
     currentangle = models.IntegerField(default=0)
+    turning = models.BooleanField(default=False)
     stepsfromzero = models.IntegerField(default=0)
     tiltupsteps = models.IntegerField(default=0)
     tiltdownsteps = models.IntegerField(default=0)

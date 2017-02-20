@@ -59,6 +59,15 @@ def tiltwindow(request, pk, format=None):
     except Window.DoesNotExist:
         return Response(status=status.HTTP_404_NOT_FOUND)
 
+    if window.turning:
+        return Response(status=status.HTTP_400_BAD_REQUEST)
+
+    window.turning = HTTP_400_BAD_REQUEST
+    window.save
+    serializedWindow = WindowSerializer(window)
+    serializer = WindowSerializer(window, serializedWindow.data)
+    serializer.save
+
     newangle = int(request.query_params.get('targetangle', None))
     motorDelay = int(request.query_params.get('sleep', 5))
     if newangle is None:
@@ -85,6 +94,7 @@ def tiltwindow(request, pk, format=None):
 	sendSteps(str(window.address), str(steps), motorDelay)
     window.currentangle = newangle
     window.stepsfromzero = steps + window.stepsfromzero
+    window.turning = False
     window.save
     serializedWindow = WindowSerializer(window)
     serializer = WindowSerializer(window, serializedWindow.data)
