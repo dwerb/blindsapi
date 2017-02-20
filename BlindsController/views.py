@@ -32,7 +32,7 @@ class WindowDetail(generics.RetrieveUpdateDestroyAPIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-def sendSteps(address, steps):
+def sendSteps(address, steps, turnTime=5):
 	print (type(address))
 	requester = GATTRequester(address)
  	t = 0.0
@@ -42,14 +42,15 @@ def sendSteps(address, steps):
             t += delay
             time.sleep(delay)
 	requester.write_by_handle(0x0012, steps)
-	while not requester.is_connected() and t < timeout:
+	time.sleep(turnTime)
+	while requester.is_connected() and t < timeout:
             t += delay
             time.sleep(delay)
 	    requester.disconnect()
 
 
 @api_view(['GET'])
-def tiltwindow(request, pk):
+def tiltwindow(request, pk, format=None):
     queryset = Window.objects.all()
     serializer_class = WindowSerializer
 
@@ -59,6 +60,7 @@ def tiltwindow(request, pk):
         return Response(status=status.HTTP_404_NOT_FOUND)
 
     newangle = int(request.query_params.get('targetangle', None))
+    motorDelay = int(request.query_params.get('sleep', 5))
     if newangle is None:
         return Response({"message": "Invalid parameter. Expecting targetangle"})
     elif (newangle < -90) or (newangle > 90):
@@ -80,7 +82,7 @@ def tiltwindow(request, pk):
 
     if steps != 0:
  	steps = int(steps)
-	sendSteps(str(window.address), str(steps))
+	sendSteps(str(window.address), str(steps), motorDelay)
     window.currentangle = newangle
     window.stepsfromzero = steps + window.stepsfromzero
     window.save
