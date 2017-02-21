@@ -31,10 +31,16 @@ class WindowDetail(generics.RetrieveUpdateDestroyAPIView):
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+received = False
+class Requester(GATTRequester):
+    def on_notification(self, handle, data):
+        global received
+        received = True
+	self.disconnect()
 
 def sendSteps(address, steps, turnTime=5):
-	print (type(address))
-	requester = GATTRequester(address)
+    try:
+	requester = Requester(address)
  	t = 0.0
 	delay = 0.25
 	timeout = 5
@@ -42,11 +48,18 @@ def sendSteps(address, steps, turnTime=5):
             t += delay
             time.sleep(delay)
 	requester.write_by_handle(0x0012, steps)
-	time.sleep(turnTime)
-	while requester.is_connected() and t < timeout:
-            t += delay
-            time.sleep(delay)
-	    requester.disconnect()
+    except:
+	return 0
+
+    response = GATTResponse()
+    requester.read_by_handle_async(0x0012, response)
+    while not received:
+        time.sleep(0.1)
+    while requester.is_connected() and t < timeout:
+        t += delay
+        time.sleep(delay)
+        requester.disconnect()
+    return steps
 
 
 @api_view(['GET'])
@@ -60,9 +73,9 @@ def tiltwindow(request, pk, format=None):
         return Response(status=status.HTTP_404_NOT_FOUND)
 
     if window.turning:
-        return Response(status=status.HTTP_400_BAD_REQUEST)
+        return Response({"message":"Motor already turning"}, status=status.HTTP_400_BAD_REQUEST)
 
-    window.turning = HTTP_400_BAD_REQUEST
+    window.turning = True
     window.save
     serializedWindow = WindowSerializer(window)
     serializer = WindowSerializer(window, serializedWindow.data)
@@ -91,9 +104,10 @@ def tiltwindow(request, pk, format=None):
 
     if steps != 0:
  	steps = int(steps)
-	sendSteps(str(window.address), str(steps), motorDelay)
-    window.currentangle = newangle
-    window.stepsfromzero = steps + window.stepsfromzero
+	turnedsteps = sendSteps(str(window.address), str(steps), motorDelay)
+    if turnedsteps != 0:
+    	window.currentangle = newangle
+    	window.stepsfromzero = steps + window.stepsfromzero
     window.turning = False
     window.save
     serializedWindow = WindowSerializer(window)
