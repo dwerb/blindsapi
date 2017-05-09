@@ -7,6 +7,7 @@ from django.db import models
 class Window(models.Model):
     name = models.CharField(max_length=100, blank=False, default='')
     address = models.CharField(max_length=30, blank=False, default='')
+    handle = models.IntegerField(default=0x0012)
     currentangle = models.IntegerField(default=0)
     turning = models.BooleanField(default=False)
     stepsfromzero = models.IntegerField(default=0)
@@ -15,4 +16,4 @@ class Window(models.Model):
     batterylevel = models.IntegerField(default=100)
     
     class Meta:
-        ordering = ('name', 'address', 'currentangle')
+        ordering = ('name', 'address', 'handle', 'currentangle')

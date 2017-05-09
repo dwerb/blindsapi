@@ -32,38 +32,46 @@ class WindowDetail(generics.RetrieveUpdateDestroyAPIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 received = False
+dataReceived = ""
 class Requester(GATTRequester):
     def on_notification(self, handle, data):
         global received
+	global dataReceived
         received = True
+	dataReceived = data
 	self.disconnect()
 
-def sendSteps(address, steps, turnTime=5):
+def sendSteps(address, handle, steps, turnTime=5, timeout=9):
+    global received
+    delay = 0.25
     try:
 	requester = Requester(address)
  	t = 0.0
-	delay = 0.25
-	timeout = 5
 	while not requester.is_connected() and t < timeout:
+            print(t)
             t += delay
             time.sleep(delay)
-	requester.write_by_handle(0x0012, steps)
+	requester.write_by_handle(handle, " " + steps)
     except:
-	return 0
+	return {"steps":-999}
 
     response = GATTResponse()
-    requester.read_by_handle_async(0x0012, response)
+    requester.read_by_handle_async(handle, response)
     while not received:
         time.sleep(0.1)
     while requester.is_connected() and t < timeout:
         t += delay
         time.sleep(delay)
         requester.disconnect()
-    return steps
+    battery=dataReceived.split(":")[1].split("\n")[0]
+    print("Battery: " + battery) 
+    received = False
+    return {"steps":steps, "battery":int(battery)}
 
 
 @api_view(['GET'])
 def tiltwindow(request, pk, format=None):
+    turnedsteps=0;
     queryset = Window.objects.all()
     serializer_class = WindowSerializer
 
@@ -81,9 +89,10 @@ def tiltwindow(request, pk, format=None):
     serializer = WindowSerializer(window, serializedWindow.data)
     serializer.save
 
-    newangle = int(request.query_params.get('targetangle', None))
+    newangle = int(request.query_params.get('targetangle', -999))
     motorDelay = int(request.query_params.get('sleep', 5))
-    if newangle is None:
+    timeout = int(request.query_params.get('timeout', 9));
+    if newangle == -999:
         return Response({"message": "Invalid parameter. Expecting targetangle"})
     elif (newangle < -90) or (newangle > 90):
         return Response({"message": "TargetAngle must be between -90 and 90 degrees"})
@@ -104,10 +113,13 @@ def tiltwindow(request, pk, format=None):
 
     if steps != 0:
  	steps = int(steps)
-	turnedsteps = sendSteps(str(window.address), str(steps), motorDelay)
-    if turnedsteps != 0:
+        turnedsteps = -999
+	result = sendSteps(str(window.address), window.handle, str(steps), motorDelay, timeout)
+	turnedsteps=result["steps"]
+    if (turnedsteps != 0) and (turnedsteps != -999):
     	window.currentangle = newangle
     	window.stepsfromzero = steps + window.stepsfromzero
+	window.batterylevel = result["battery"]
     window.turning = False
     window.save
     serializedWindow = WindowSerializer(window)
