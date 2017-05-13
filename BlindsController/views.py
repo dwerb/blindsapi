@@ -63,6 +63,7 @@ def sendSteps(address, handle, steps, turnTime=5, timeout=9):
         t += delay
         time.sleep(delay)
         requester.disconnect()
+    print("DataReceived: " + dataReceived)
     battery=dataReceived.split(":")[1].split("\n")[0]
     print("Battery: " + battery) 
     received = False
@@ -89,7 +90,7 @@ def tiltwindow(request, pk, format=None):
     serializer = WindowSerializer(window, serializedWindow.data)
     serializer.save
 
-    newangle = int(request.query_params.get('targetangle', -999))
+    newangle = int(float(request.query_params.get('targetangle', -999.0)))
     motorDelay = int(request.query_params.get('sleep', 5))
     timeout = int(request.query_params.get('timeout', 9));
     if newangle == -999:
