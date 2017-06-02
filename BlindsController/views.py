@@ -45,16 +45,18 @@ def sendSteps(address, handle, steps, turnTime=5, timeout=9):
     global received
     delay = 0.25
     try:
-	requester = Requester(address)
- 	t = 0.0
-	while not requester.is_connected() and t < timeout:
-            print(t)
-            t += delay
-            time.sleep(delay)
-	requester.write_by_handle(handle, " " + steps)
-    except:
-	return {"steps":-999}
-
+        requester = Requester(address)
+        t = 0.0
+        time.sleep(delay)
+        while not requester.is_connected() and t < timeout:
+                print(t)
+                t += delay
+                time.sleep(delay)
+        requester.write_by_handle(handle, " " + steps)
+    except Exception as ex:
+        print(ex)
+        return {"steps":-999, "battery":-999}
+        
     response = GATTResponse()
     requester.read_by_handle_async(handle, response)
     while not received:
@@ -116,6 +118,7 @@ def tiltwindow(request, pk, format=None):
  	steps = int(steps)
         turnedsteps = -999
 	result = sendSteps(str(window.address), window.handle, str(steps), motorDelay, timeout)
+        print("Here I am")
 	turnedsteps=result["steps"]
     if (turnedsteps != 0) and (turnedsteps != -999):
     	window.currentangle = newangle
